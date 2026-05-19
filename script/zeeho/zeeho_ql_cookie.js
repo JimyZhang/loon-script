@@ -6,13 +6,13 @@ new Env('极核-ZEEHO 青龙变量同步');
 
 Loon 配置示例：
 [Script]
-http-response ^https:\/\/tapi\.zeehoev\.com\/v1\.0\/mine\/cfmotoservermine\/setting script-path=https://raw.githubusercontent.com/leiyiyan/resource/main/script/zeeho/zeeho_ql_cookie.js, requires-body=true, timeout=60, tag=极核青龙变量同步
+http-response ^https:\/\/tapi\.zeehoev\.com\/v1\.0\/mine\/cfmotoservermine\/setting script-path=https://raw.githubusercontent.com/JimyZhang/script/refs/heads/main/script/zeeho/zeeho_ql_cookie.js, requires-body=true, timeout=60, tag=极核青龙变量同步
 
 [MITM]
 hostname = tapi.zeehoev.com
 
 配置项：
-- zeeho_ql_baseurl：青龙地址，默认 https://ql.joyzj.cn:4443
+- zeeho_ql_baseurl：青龙地址，默认 https://127.0.0.1:5700
 - zeeho_ql_client_id：青龙应用 client_id
 - zeeho_ql_client_secret：青龙应用 client_secret
 - zeeho_ql_env_name：青龙环境变量名，默认 zeeho_data
@@ -21,7 +21,7 @@ hostname = tapi.zeehoev.com
 
 const $ = new Env("极核-ZEEHO 青龙变量同步");
 
-const DEFAULT_QL_BASEURL = "https://ql.joyzj.cn:4443";
+const DEFAULT_QL_BASEURL = "https://127.0.0.1:5700";
 const DEFAULT_ENV_NAME = "zeeho_data";
 const DEFAULT_ENV_REMARKS = "极核-ZEEHO";
 

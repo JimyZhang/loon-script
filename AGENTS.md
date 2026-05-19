@@ -3,7 +3,7 @@
 ## 项目结构
 
 - `script/` 存放兼容 Loon 的 JavaScript 脚本，并按服务分目录组织。
-- `script/qinglong/` 存放青龙专用脚本，优先使用 Node.js 和青龙环境变量运行，不承担 Loon 抓包入口职责。
+- `qinglong/` 存放青龙专用脚本，优先使用 Node.js 和青龙环境变量运行，不承担 Loon 抓包入口职责。
 - `loon/plugin/` 存放 Loon 插件定义，插件中的脚本地址指向 GitHub raw URL。
 - `icons/` 存放插件元数据和订阅使用的 PNG 图标。
 - `subscribe/` 存放生成后的订阅 JSON，例如图标订阅和 BoxJS 元数据。

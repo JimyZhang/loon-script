@@ -36,6 +36,7 @@ new Env('极核-ZEEHO 青龙版');
 
 // env.js 全局
 const $ = new Env("极核-ZEEHO");
+const SCRIPT_VERSION = "2026-05-19-ql-got-fix";
 const ckName = "zeeho_data";
 //-------------------- 一般不动变量区域 -------------------------------------
 const Notify = 1;//0为关闭通知,1为打开通知,默认为1
@@ -83,6 +84,7 @@ function initNotify() {
 //脚本入口函数main()
 async function main() {
   try {
+    $.log(`脚本版本：${SCRIPT_VERSION}`);
     $.log('\n================== 任务 ==================\n');
     for (let user of userList) {
       console.log(`🔷账号${user.index} >> Start work`)
@@ -93,7 +95,14 @@ async function main() {
       if (user.ckStatus) {
         await $.wait(user.getRandomTime());
         // 查看签到记录
-        const {count, prize} = await user.getSignRecord()
+        const signRecord = await user.getSignRecord()
+        if (!signRecord) {
+          $.notifyMsg.push(`❌账号${user.userName || user.index} >> 查询签到记录失败，跳过后续任务`)
+          $.notifyList.push({ "id": user.index, "avatar": user.avatar, "message": $.notifyMsg });
+          $.notifyMsg = [];
+          continue;
+        }
+        const {count, prize} = signRecord
         await $.wait(user.getRandomTime());
         if(prize == 3) {
           // 盲盒抽奖
@@ -325,20 +334,10 @@ class UserInfo {
     try {
       const opts = {
         url: `https://tapi.zeehoev.com/v1.0/social/cfmotoserversocial/article/share/${postId}`,
-        method: "put",
+        type: "put",
         headers: Object.assign(this.headers, getSign('app'))
       }
-      let res = await new Promise((resolve, reject) => {
-        $.http['post'](opts)
-          .then((response) => {
-            var resp = response.body;
-            try {
-              resp = $.toObj(resp) || resp;
-            } catch (e) { }
-            resolve(resp);
-          })
-          .catch((err) => reject(err));
-      });
+      let res = await this.fetch(opts);
       $.log(`✅ 分享动态: ${postId}`)
     } catch (e) {
       this.ckStatus = false;
@@ -350,20 +349,10 @@ class UserInfo {
     try {
       const opts = {
         url: `https://tapi.zeehoev.com/v1.0/social/cfmotoserversocial/commonArticle/deleteArticle?articleId=${postId}&postType=1`,
-        method: "delete",
+        type: "delete",
         headers: Object.assign(this.headers, getSign('app'))
       }
-      let res = await new Promise((resolve, reject) => {
-        $.http['post'](opts)
-          .then((response) => {
-            var resp = response.body;
-            try {
-              resp = $.toObj(resp) || resp;
-            } catch (e) { }
-            resolve(resp);
-          })
-          .catch((err) => reject(err));
-      });
+      let res = await this.fetch(opts);
       $.log(`✅ 删除动态: ${postId}`)
     } catch (e) {
       this.ckStatus = false;
@@ -408,26 +397,39 @@ function getSign(type, params = {}) {
   }
 }
 //-------------------------- 辅助函数区域 -----------------------------------
+function getGot() {
+  const gotModule = require("got");
+  return gotModule.got || gotModule.default || gotModule;
+}
+
 //请求二次封装
 async function Request(o) {
   if (typeof o === 'string') o = { url: o };
   try {
     if (!o?.url) throw new Error('[发送请求] 缺少 url 参数');
-    // type => 因为env中使用method处理post的特殊请求(put/delete/patch), 所以这里使用type
-    let { url: u, type, headers = {}, body: b, params, dataType = 'form', resultType = 'data' } = o;
-    // post请求需要处理params参数(get不需要, env已经处理)
-    const method = type ? type?.toLowerCase() : ('body' in o ? 'post' : 'get');
-    const url = u.concat(method === 'post' ? '?' + $.queryStr(params) : '');
-
+    let { url, type, method: inputMethod, headers = {}, body: b, params, dataType = 'form', resultType = 'data' } = o;
+    const method = (type || inputMethod || ('body' in o ? 'post' : 'get')).toLowerCase();
     const timeout = o.timeout ? ($.isSurge() ? o.timeout / 1e3 : o.timeout) : 1e4
     // 根据jsonType处理headers
     if (dataType === 'json') headers['Content-Type'] = 'application/json;charset=UTF-8';
     // post请求处理body
     const body = b && dataType == 'form' ? $.queryStr(b) : $.toStr(b);
-    const request = { ...o, ...(o?.opts ? o.opts : {}), url, headers, ...(method === 'post' && { body }), ...(method === 'get' && params && { params }), timeout: timeout }
-    const httpPromise = $.http[method.toLowerCase()](request)
+    const got = getGot();
+    const request = {
+      ...(o?.opts ? o.opts : {}),
+      method,
+      headers,
+      ...(params && { searchParams: params }),
+      ...(method !== 'get' && body && { body }),
+      timeout: { request: timeout },
+      throwHttpErrors: false
+    };
+    const httpPromise = got(url, request)
       .then(response => resultType == 'data' ? ($.toObj(response.body) || response.body) : ($.toObj(response) || response))
-      .catch(err => $.log(`❌请求发起失败！原因为：${err}`));
+      .catch(err => {
+        $.log(`❌请求发起失败！原因为：${err}`);
+        throw err;
+      });
     // 使用Promise.race来强行加入超时处理
     return Promise.race([
       new Promise((_, e) => setTimeout(() => e('当前请求已超时'), timeout)),

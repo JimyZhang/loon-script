@@ -17,6 +17,14 @@ Loon 插件文件中的脚本地址通常指向本仓库 `main` 分支下的 Git
 
 青龙脚本放在 `qinglong/`。这类脚本面向 Node.js/青龙环境运行，通常通过青龙环境变量传入账号数据，不依赖 Loon 的 `$request`/`$response` 抓包入口。
 
+`script/zeeho/zeeho_ql_cookie.js` 用于在 Loon 抓取 ZEEHO 账号信息后同步到青龙 OpenAPI。使用前需要在 Loon/BoxJS 本地配置：
+
+- `zeeho_ql_baseurl`：青龙地址，默认 `https://ql.joyzj.cn:4443`
+- `zeeho_ql_client_id`：青龙应用 `client_id`
+- `zeeho_ql_client_secret`：青龙应用 `client_secret`
+- `zeeho_ql_env_name`：青龙环境变量名，默认 `zeeho_data`
+- `zeeho_ql_env_remarks`：青龙环境变量备注，默认 `极核-ZEEHO`
+
 ## 开发与验证
 
 当前仓库没有包管理器清单，也没有定义自动化测试命令。

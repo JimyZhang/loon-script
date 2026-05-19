@@ -128,8 +128,15 @@ async function getQlEnvs(config, token) {
 }
 
 async function updateQlEnv(config, token, env, value) {
+  const envId = getEnvId(env);
+  if (!envId) {
+    $.msg($.name, "❌更新青龙变量失败", `变量 ${config.envName} 缺少 id/_id`);
+    $.log(`青龙变量返回字段：${Object.keys(env || {}).join(",")}`);
+    return false;
+  }
+
   const payload = {
-    id: env.id,
+    id: envId,
     name: config.envName,
     value,
     remarks: env.remarks || config.remarks
@@ -186,6 +193,10 @@ function buildNextEnvValue(oldValue, account) {
 
 function findEnv(envs, name) {
   return envs.find((env) => env.name === name);
+}
+
+function getEnvId(env) {
+  return env?.id ?? env?._id;
 }
 
 function buildQlHeaders(token) {
@@ -318,4 +329,3 @@ function Env(t, e) {
     }
   }(t, e);
 }
-
